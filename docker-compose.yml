@@ -1,0 +1,10 @@
+version: '3.8'
+services:
+  app:
+    build: ./api
+    command: >
+      /bin/bash -c "git pull &&
+                    ./gradlew build -x test &&
+                    gradle clean bootRun -x test"
+    ports:
+      - "8080:8080"
