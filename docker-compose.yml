@@ -1,10 +1,51 @@
 version: '3.8'
 services:
-  app:
-    build: ./api
+  db:
+    build: ./db
+    container_name: db
+    env_file:
+      - ./db/db.env
+    ports:
+      - "65432:5432"
+    volumes:
+      - palettea-db-data:/var/lib/postgresql/data
     command: >
       /bin/bash -c "git pull &&
-                    ./gradlew build -x test &&
-                    gradle clean bootRun -x test"
+                    flyway migrate"
+  app:
+    build: ./api
+    container_name: app
+    volumes:
+      - type: volume
+        source: palettea-api-gradle-home
+        target: /home/gradle/.gradle
+      - type: volume
+        source: palettea-api-app
+        target: /app/palettea-api
+    command: >
+      /bin/bash -c "git pull &&
+                    ./gradlew clean bootRun -x test"
     ports:
-      - "8080:8080"
+      - "8180:8080"
+  web:
+    build: ./web
+    container_name: web
+    volumes:
+      - type: volume
+        source: palettea-web-app
+        target: /app/palettea-web
+    command: >
+      /bin/bash -c "git pull &&
+                    npm install &&
+                    ng serve --host=0.0.0.0"
+    ports:
+      - "4200:4200"
+volumes:
+  palettea-api-gradle-home:
+    name: palettea-api-gradle-home
+  palettea-api-app:
+    name: palettea-api-app
+  palettea-web-app:
+    name: palettea-web-app
+  palettea-db-data:
+    name: palettea-db-data
