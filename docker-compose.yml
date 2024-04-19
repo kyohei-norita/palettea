@@ -1,32 +1,50 @@
-version: '3.8'
 services:
   db:
-    build: ./db
+    image: postgres:15
     container_name: db
-    env_file:
-      - ./db/db.env
+    environment:
+      - POSTGRES_USER=pgadmin
+      - POSTGRES_PASSWORD=pgadmin
+      - POSTGRES_DB=palettea
     ports:
-      - "65432:5432"
+      - "5432:5432"
     volumes:
       - palettea-db-data:/var/lib/postgresql/data
-    command: >
-      /bin/bash -c "git pull &&
-                    flyway migrate"
-  app:
-    build: ./api
-    container_name: app
+  flyway:
+    image: flyway/flyway:10.11.0-alpine
+    container_name: flyway
+    depends_on:
+      - db
+    volumes:
+      - type: bind
+        source: ./workspace/palettea-db/conf
+        target: /flyway/conf
+        read_only: true
+      - type: bind
+        source: ./workspace/palettea-db/migration
+        target: /flyway/migrations/sql
+        read_only: true
+    environment:
+      - FLYWAY_URL=jdbc:postgresql://db:5432/palettea
+      - FLYWAY_USER=pgadmin
+      - FLYWAY_PASSWORD=pgadmin
+  api:
+    image: gradle:8.7.0-jdk21
+    container_name: api
+    working_dir: /app
     volumes:
       - type: volume
         source: palettea-api-gradle-home
         target: /home/gradle/.gradle
-      - type: volume
-        source: palettea-api-app
-        target: /app/palettea-api
+      - type: bind
+        source: ./workspace/palettea-api
+        target: /app
+    entrypoint: /bin/bash -c
     command: >
-      /bin/bash -c "git pull &&
-                    ./gradlew clean bootRun -x test"
+      "./gradlew --stop &&
+       ./gradlew clean bootRun -x test"
     ports:
-      - "8180:8080"
+      - "8080:8080"
   web:
     build: ./web
     container_name: web
@@ -34,9 +52,11 @@ services:
       - type: volume
         source: palettea-web-app
         target: /app/palettea-web
+      - type: bind
+        source: ./workspace/palettea-web
+        target: /app
     command: >
-      /bin/bash -c "git pull &&
-                    npm install &&
+      /bin/bash -c "npm ci &&
                     ng serve --host=0.0.0.0"
     ports:
       - "4200:4200"
