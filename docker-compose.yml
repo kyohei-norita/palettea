@@ -17,11 +17,11 @@ services:
       - db
     volumes:
       - type: bind
-        source: ./workspace/palettea-db/conf
+        source: ./workspace/palettea-flyway/conf
         target: /flyway/conf
         read_only: true
       - type: bind
-        source: ./workspace/palettea-db/migration
+        source: ./workspace/palettea-flyway/migration
         target: /flyway/migrations/sql
         read_only: true
     environment:
@@ -36,9 +36,31 @@ services:
       - type: volume
         source: palettea-api-gradle-home
         target: /home/gradle/.gradle
+      - type: volume
+        source: palettea-api-gradle-cache
+        target: /app/.gradle
+      - type: volume
+        source: palettea-api-build-cache
+        target: /app/.gradle
       - type: bind
-        source: ./workspace/palettea-api
-        target: /app
+        source: ./workspace/palettea-api/gradle
+        target: /app/gradle
+      - type: bind
+        source: ./workspace/palettea-api/src
+        target: /app/src
+      - type: bind
+        source: ./workspace/palettea-api/build.gradle
+        target: /app/build.gradle
+      - type: bind
+        source: ./workspace/palettea-api/gradlew
+        target: /app/gradlew
+      - type: bind
+        source: ./workspace/palettea-api/settings.gradle
+        target: /app/settings.gradle
+    environment:
+      - DATASOURCE_URL=jdbc:postgresql://db:5432/palettea
+      - DATASOURCE_USERNAME=pgadmin
+      - DATASOURCE_PASSWORD=pgadmin
     entrypoint: /bin/bash -c
     command: >
       "./gradlew --stop &&
@@ -63,6 +85,10 @@ services:
 volumes:
   palettea-api-gradle-home:
     name: palettea-api-gradle-home
+  palettea-api-gradle-cache:
+    name: palettea-api-gradle-cache
+  palettea-api-build-cache:
+    name: palettea-api-build-cache
   palettea-api-app:
     name: palettea-api-app
   palettea-web-app:
