@@ -72,11 +72,32 @@ services:
     container_name: web
     volumes:
       - type: volume
-        source: palettea-web-app
-        target: /app/palettea-web
+        source: palettea-web-node-modules
+        target: /app/node_modules
+      - type: volume
+        source: palettea-web-angular-cache
+        target: /app/.angular
       - type: bind
-        source: ./workspace/palettea-web
-        target: /app
+        source: ./workspace/palettea-web/src
+        target: /app/src
+      - type: bind
+        source: ./workspace/palettea-web/angular.json
+        target: /app/angular.json
+      - type: bind
+        source: ./workspace/palettea-web/package.json
+        target: /app/package.json
+      - type: bind
+        source: ./workspace/palettea-web/package-lock.json
+        target: /app/package-lock.json
+      - type: bind
+        source: ./workspace/palettea-web/tsconfig.app.json
+        target: /app/tsconfig.app.json
+      - type: bind
+        source: ./workspace/palettea-web/tsconfig.json
+        target: /app/tsconfig.json
+      - type: bind
+        source: ./workspace/palettea-web/tsconfig.spec.json
+        target: /app/tsconfig.spec.json
     command: >
       /bin/bash -c "npm ci &&
                     ng serve --host=0.0.0.0"
@@ -89,9 +110,9 @@ volumes:
     name: palettea-api-gradle-cache
   palettea-api-build-cache:
     name: palettea-api-build-cache
-  palettea-api-app:
-    name: palettea-api-app
-  palettea-web-app:
-    name: palettea-web-app
+  palettea-web-node-modules:
+    name: palettea-web-node-modules
+  palettea-web-angular-cache:
+    name: palettea-web-angular-cache
   palettea-db-data:
     name: palettea-db-data
